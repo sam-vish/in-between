@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<script src="assets/gsap.min.js"></script>
+<script src="assets/world.js"></script>
+<style>
+@font-face { font-family: "Anton"; src: url("assets/anton-latin-400-normal.woff2") format("woff2"); }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 540px; height: 960px; background: #0B0B0C; overflow: hidden; }
+#root { position: absolute; inset: 0; width: 540px; height: 960px; overflow: hidden; background: #0B0B0C; }
+#c { position: absolute; inset: 0; width: 540px; height: 960px; image-rendering: pixelated; }
+#hook { position: absolute; left: 30px; right: 30px; top: 34px; padding: 15px 10px 7px; background: #EFE6D2; color: #17140F; font-family: "Anton"; font-size: 40px; line-height: 1; text-align: center; }
+#caps { position: absolute; left: 12px; right: 12px; top: 310px; text-align: center; font-family: "Anton"; font-size: 92px; line-height: 1.02; color: #EFE6D2; text-shadow: 0 6px 0 #000, 4px 0 0 #000, -4px 0 0 #000; }
+#caps span { display: inline-block; margin: 0 10px; opacity: 0; }
+#fade { position: absolute; inset: 0; background: #0B0B0C; opacity: 0; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="6" data-width="540" data-height="960">
+  <canvas id="c" class="clip" width="135" height="240" data-start="0" data-duration="6" data-track-index="1"></canvas>
+  <div id="hook" class="clip" data-start="0" data-duration="6" data-track-index="2">CINCO VIATURAS ATRÁS DELE</div>
+  <div id="caps" class="clip" data-layout-allow-overlap data-start="0" data-duration="6" data-track-index="3"><span style="">MANO,</span><span style="color:#FFB547">OLHA</span><span style="">ISSO</span></div>
+  <div id="fade" class="clip" data-layout-allow-overlap data-start="0" data-duration="6" data-track-index="4"></div>
+</div>
+<script>
+(function () {
+  window.__timelines = window.__timelines || {};
+  const cfg = {"seed": 11, "police": 5, "hook": "CINCO VIATURAS ATR\u00c1S DELE", "caps": ["MANO,", "OLHA", "ISSO"], "hot": 1, "grade": null, "start": 1.6, "focusX": 0.84};
+  const world = IB.createWorld(cfg.seed);
+  const c = document.getElementById("c");
+  const g = c.getContext("2d", { alpha: false });
+  const camH = 96;
+  const clamp = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+  const draw = (t) => {
+    const s = cfg.start + t * 0.92;
+    g.save();
+    g.beginPath();
+    g.rect(0, camH, 135, 144);
+    g.clip();
+    g.translate(0, camH);
+    IB.render(g, world, { vw: 135, vh: 144, s, focusX: cfg.focusX, police: cfg.police, grade: cfg.grade });
+    g.restore();
+    const a = IB.actionAt(s);
+    const u = clamp((s - IB.RAMP_S) / 0.15);
+    IB.drawFacecam(g, 0, 0, 135, camH, s, a.shock, u > 0 && u < 1 ? Math.sin(u * Math.PI) : 0);
+    g.fillStyle = "#0B0B0C";
+    g.fillRect(0, camH - 1, 135, 2);
+  };
+  const tl = gsap.timeline({ paused: true });
+  const clock = { t: 0 };
+  tl.fromTo(clock, { t: 0 }, { t: 6, duration: 6, ease: "none", onUpdate: () => draw(clock.t) }, 0);
+  const startWords = (IB.RAMP_S - cfg.start) / 0.92;
+  document.querySelectorAll("#caps span").forEach((el, i) => {
+    tl.fromTo(el, { opacity: 0, scale: 1.35 }, { opacity: 1, scale: 1, duration: 0.1, ease: "power2.out", immediateRender: false }, startWords + i * 0.32);
+  });
+  tl.fromTo("#fade", { opacity: 1 }, { opacity: 0, duration: 0.2, ease: "none" }, 0);
+  tl.fromTo("#fade", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "none", immediateRender: false }, 5.75);
+  window.__timelines["main"] = tl;
+  draw(0);
+})();
+</script>
+</body>
+</html>

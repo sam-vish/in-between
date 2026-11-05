@@ -1,0 +1,183 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<script src="assets/gsap.min.js"></script>
+<script src="assets/world.js"></script>
+<style>
+@font-face { font-family: "Anton"; src: url("assets/anton-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "VT323"; src: url("assets/vt323-latin-400-normal.woff2") format("woff2"); }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1280px; height: 960px; background: #0B0B0C; overflow: hidden; }
+#root { position: absolute; inset: 0; width: 1280px; height: 960px; overflow: hidden; background: #0B0B0C; color: #EFE6D2; font-family: "VT323", monospace; }
+#stream { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; image-rendering: pixelated; }
+#dim { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; background: #08080A; opacity: 0; }
+#hud { position: absolute; left: 22px; top: 20px; padding: 4px 14px 2px; background: #0B0B0C; font-size: 38px; display: flex; gap: 12px; align-items: center; }
+#dot { width: 20px; height: 20px; border-radius: 50%; background: #FF3B2F; }
+
+/* The caption band does the explaining. One plain sentence per beat. */
+#band { position: absolute; left: 0; right: 0; top: 720px; height: 240px; background: #0B0B0C; display: flex; align-items: center; padding: 0 48px; }
+#cap { font-family: "Anton"; font-size: 108px; line-height: 1; text-transform: uppercase; white-space: nowrap; }
+#pips { position: absolute; left: 48px; right: 48px; bottom: 26px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+#pips i { display: block; height: 6px; background: #2A2826; }
+
+#chat { position: absolute; right: 24px; top: 262px; width: 340px; height: 300px; overflow: hidden; background: #0B0B0C; opacity: 0; padding: 0 14px; }
+#chat-list { font-size: 32px; line-height: 40px; white-space: nowrap; }
+#chat-list div { height: 40px; overflow: hidden; }
+
+#stamp { position: absolute; left: 500px; top: 530px; font-family: "Anton"; font-size: 104px; line-height: 1; padding: 18px 30px 8px; color: #FF3B2F; border: 9px solid #FF3B2F; border-radius: 8px; white-space: nowrap; background: #0B0B0C; text-transform: uppercase; opacity: 0; transform: translate(-50%,-50%) rotate(-3deg); }
+
+#lift { position: absolute; left: 0; top: 0; border: 6px solid #FF3B2F; opacity: 0; }
+#phone { position: absolute; left: 446px; top: 16px; width: 388px; height: 688px; border-radius: 30px; overflow: hidden; background: #0B0B0C; box-shadow: 0 0 0 8px #1C1A19; opacity: 0; }
+#phone canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+#hook { position: absolute; left: 22px; right: 22px; top: 22px; padding: 12px 8px 5px; background: #EFE6D2; color: #17140F; font-family: "Anton"; font-size: 31px; line-height: 1; text-align: center; text-transform: uppercase; }
+#caps { position: absolute; left: 0; right: 0; top: 232px; text-align: center; font-family: "Anton"; font-size: 70px; line-height: 1.02; color: #EFE6D2; text-shadow: 0 5px 0 #000, 3px 0 0 #000, -3px 0 0 #000; }
+#caps span { display: inline-block; margin: 0 6px; opacity: 0; }
+#card { position: absolute; left: 864px; top: 300px; width: 386px; padding: 20px 22px; background: #191720; border-radius: 8px; opacity: 0; font-size: 38px; line-height: 1.04; }
+#card small { display: block; font-size: 28px; color: #B9B1A0; margin-bottom: 8px; }
+#check { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: #57E389; color: #17140F; font-size: 30px; margin-right: 8px; vertical-align: -4px; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="11" data-width="1280" data-height="960">
+  <canvas id="stream" class="clip" width="320" height="180" data-start="0" data-duration="11" data-track-index="1"></canvas>
+  <div id="dim" class="clip" data-layout-allow-overlap data-start="0" data-duration="11" data-track-index="2"></div>
+  <div id="hud" class="clip" data-layout-allow-overlap data-start="0" data-duration="11" data-track-index="3"><span id="dot"></span><span id="tc">02:14:37</span></div>
+  <div id="chat" class="clip" data-layout-allow-overlap data-start="0" data-duration="11" data-track-index="4"><div id="chat-list"></div></div>
+  <div id="stamp" class="clip" data-layout-allow-overlap data-start="0" data-duration="11" data-track-index="5">Moment detected</div>
+  <div id="lift" class="clip" data-layout-allow-overlap data-start="0" data-duration="11" data-track-index="6"></div>
+  <div id="phone" class="clip" data-layout-allow-overlap data-start="0" data-duration="11" data-track-index="7">
+    <canvas id="phone-c" width="135" height="240"></canvas>
+    <div id="hook">He did not see that coming</div>
+    <div id="caps"><span>BRO</span><span style="color:#FFB547">WHAT</span><span>WAS</span><span>THAT</span></div>
+  </div>
+  <div id="card" class="clip" data-layout-allow-overlap data-start="0" data-duration="11" data-track-index="8"><small># clips</small><span id="check">✓</span>Clip ready · 01:42 after moment</div>
+  <div id="band" class="clip" data-start="0" data-duration="11" data-track-index="9">
+    <div id="cap">You're live.</div>
+    <div id="pips"><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+</div>
+<script>
+(function () {
+  window.__timelines = window.__timelines || {};
+  const LOOP = 11;
+  const world = IB.createWorld(4);
+  const clamp = (v, a = 0, b = 1) => (v < a ? a : v > b ? b : v);
+  const seg = (t, a, b) => clamp((t - a) / (b - a));
+  const smooth = (u) => u * u * (3 - 2 * u);
+
+  const g = document.getElementById("stream").getContext("2d", { alpha: false });
+  const pg = document.getElementById("phone-c").getContext("2d", { alpha: false });
+  const tc = document.getElementById("tc");
+  const cap = document.getElementById("cap");
+  const pips = Array.from(document.querySelectorAll("#pips i"));
+
+  const BEATS = [
+    [0, 2.5, "You're live.", 0],
+    [2.5, 4.5, "Chat loses it.", 1],
+    [4.5, 6, "We catch it.", 2],
+    [6, 8.5, "We cut it vertical.", 3],
+    [8.5, 10.2, "In your Discord in about 2 min.", 4],
+    [10.2, 11.01, "You're live.", 0],
+  ];
+
+  /* Chat only exists for the one beat where it matters. */
+  const r = IB.rng(5);
+  const list = document.getElementById("chat-list");
+  for (let i = 0; i < 32; i++) {
+    const [who, msg, col] = IB.CHAT_HYPE[Math.floor(r() * IB.CHAT_HYPE.length)];
+    const d = document.createElement("div");
+    d.innerHTML = `<span style="color:${col}">${who}</span>: ${msg}`;
+    list.appendChild(d);
+  }
+
+  /* Action clock: the flip peaks right as the freeze lands. */
+  const OFFSET = 4.5 - IB.APEX_S;
+  const actionS = (t) => t - OFFSET;
+  const pad = (n) => String(Math.floor(n)).padStart(2, "0");
+
+  function drawFrame(t) {
+    const frozen = t >= 4.5 && t < 10;
+    const s = frozen ? IB.APEX_S : actionS(t);
+
+    if (t >= 10) {
+      // Beat 6 lands on Beat 1's exact frame: pure cruising on the loop's own period.
+      IB.render(g, world, { vw: 320, vh: 180, s: actionS(t - LOOP), focusX: 0.38, showAction: false });
+    } else {
+      IB.render(g, world, { vw: 320, vh: 180, s, focusX: 0.38, showAction: t >= 1.2 });
+    }
+
+    // The streamer is always there: it's their stream.
+    const face = t >= 10 ? actionS(t - LOOP) : s;
+    const a = IB.actionAt(face);
+    const pu = seg(face, IB.RAMP_S, IB.RAMP_S + 0.15);
+    g.fillStyle = "#0B0B0C";
+    g.fillRect(241, 3, 76, 58);
+    IB.drawFacecam(g, 242, 4, 74, 56, face, t >= 10 ? 0 : a.shock, pu > 0 && pu < 1 && t < 10 ? Math.sin(pu * Math.PI) : 0);
+
+    const secs = 2 * 3600 + 14 * 60 + 37 + Math.floor(frozen ? 4.5 : t >= 10 ? t - LOOP : t);
+    tc.textContent = `${pad(secs / 3600)}:${pad((secs % 3600) / 60)}:${pad(secs % 60)}`;
+
+    const beat = BEATS.find(([a0, b0]) => t >= a0 && t < b0) || BEATS[5];
+    if (cap.textContent !== beat[2]) cap.textContent = beat[2];
+    cap.style.fontSize = beat[2].length > 22 ? "86px" : "108px";
+    pips.forEach((p, i) => (p.style.background = i === beat[3] ? "#FF3B2F" : "#2A2826"));
+
+    document.getElementById("chat-list").style.transform = `translateY(${-seg(t, 2.5, 4.5) * 24 * 40}px)`;
+
+    if (t >= 6.7 && t < 10.5) {
+      const replay = 1.4 + (IB.LAND_S + 0.8 - 1.4) * seg(t, 6.8, 9.6);
+      const camH = 96;
+      pg.save();
+      pg.beginPath();
+      pg.rect(0, camH, 135, 144);
+      pg.clip();
+      pg.translate(0, camH);
+      IB.render(pg, world, { vw: 135, vh: 144, s: replay, focusX: 0.5 });
+      pg.restore();
+      const ra = IB.actionAt(replay);
+      const rp = seg(replay, IB.RAMP_S, IB.RAMP_S + 0.15);
+      IB.drawFacecam(pg, 0, 0, 135, camH, replay, ra.shock, rp > 0 && rp < 1 ? Math.sin(rp * Math.PI) : 0);
+      pg.fillStyle = "#0B0B0C";
+      pg.fillRect(0, camH - 1, 135, 2);
+    }
+  }
+
+  const tl = gsap.timeline({ paused: true });
+  const clock = { t: 0 };
+  tl.fromTo(clock, { t: 0 }, { t: 11, duration: 11, ease: "none", onUpdate: () => drawFrame(clock.t) }, 0);
+
+  // Beat 2: chat, and only chat.
+  tl.fromTo("#chat", { opacity: 0 }, { opacity: 1, duration: 0.15, ease: "none", immediateRender: false }, 2.5);
+  tl.to("#chat", { opacity: 0, duration: 0.1, ease: "none" }, 4.5);
+
+  // Beat 3: the stamp, alone.
+  tl.fromTo("#stamp", { opacity: 0, scale: 1.3 }, { opacity: 1, scale: 1, duration: 0.18, ease: "power2.out", immediateRender: false }, 4.55);
+  tl.to("#stamp", { opacity: 0, duration: 0.2, ease: "power2.inOut" }, 5.85);
+
+  // Beat 4: a crop frame closes in on the moment and becomes the phone.
+  tl.fromTo("#dim", { opacity: 0 }, { opacity: 0.82, duration: 0.5, ease: "power2.inOut", immediateRender: false }, 6.0);
+  const lift = document.getElementById("lift");
+  gsap.set(lift, { x: 60, y: 40, width: 1160, height: 640 });
+  tl.set(lift, { opacity: 1 }, 6.0);
+  tl.to(lift, { x: 446, y: 16, width: 388, height: 688, borderRadius: 30, duration: 0.75, ease: "power2.inOut" }, 6.0);
+  tl.set("#phone", { opacity: 1 }, 6.75);
+  tl.set(lift, { opacity: 0 }, 6.75);
+  ["1", "2", "3", "4"].forEach((n, i) => {
+    tl.fromTo(`#caps span:nth-child(${n})`, { opacity: 0, scale: 1.3 }, { opacity: 1, scale: 1, duration: 0.1, ease: "power2.out", immediateRender: false }, 7.6 + i * 0.28);
+  });
+
+  // Beat 5
+  tl.fromTo("#card", { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.3, ease: "power2.out", immediateRender: false }, 8.5);
+
+  // Beat 6: back to live.
+  tl.to("#phone", { opacity: 0, duration: 0.35, ease: "power2.inOut" }, 10.0);
+  tl.to("#card", { opacity: 0, duration: 0.3, ease: "power2.inOut" }, 10.0);
+  tl.to("#dim", { opacity: 0, duration: 0.4, ease: "power2.inOut" }, 10.0);
+
+  window.__timelines["main"] = tl;
+  drawFrame(0);
+})();
+</script>
+</body>
+</html>
